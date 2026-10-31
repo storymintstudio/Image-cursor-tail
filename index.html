@@ -1,0 +1,149 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cursor Image Trail</title>
+
+<style>
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  background: #0a0a0a;
+  overflow: hidden;
+  font-family: Arial, sans-serif;
+}
+
+.trail-container {
+  width: 100%;
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+  overflow: hidden;
+  cursor: none;
+}
+
+.trail-container p {
+  color: rgba(255,255,255,0.35);
+  font-size: clamp(20px, 4vw, 42px);
+  letter-spacing: 2px;
+  pointer-events: none;
+  user-select: none;
+}
+
+.trail-image {
+  position: absolute;
+  width: 120px;
+  height: 120px;
+  object-fit: cover;
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+  border-radius: 8px;
+  will-change: transform, opacity;
+  animation: imageFade 0.9s ease-out forwards;
+}
+
+@keyframes imageFade {
+  0% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1) rotate(var(--rotation));
+  }
+
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.4) rotate(var(--rotation));
+  }
+}
+</style>
+</head>
+
+<body>
+
+<div class="trail-container" id="trail">
+  <p>MOVE YOUR CURSOR</p>
+</div>
+
+<script>
+const container = document.getElementById("trail");
+
+const images = [
+  "https://images.unsplash.com/photo-1470252649378-9c29740c9fa8?w=400",
+  "https://images.unsplash.com/photo-1470770841072-f978cf4d019e?w=400",
+  "https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=400",
+  "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?w=400",
+  "https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?w=400",
+  "https://images.unsplash.com/photo-1501785888041-af3ef285b470?w=400"
+];
+
+let imageIndex = 0;
+let lastX = 0;
+let lastY = 0;
+
+const imageSize = 120;
+const trailLength = 8;
+const spawnDistance = 80;
+const rotationRange = 20;
+
+let activeImages = [];
+
+container.addEventListener("mousemove", (e) => {
+  const rect = container.getBoundingClientRect();
+
+  const x = e.clientX - rect.left;
+  const y = e.clientY - rect.top;
+
+  const distance = Math.hypot(x - lastX, y - lastY);
+
+  if (distance < spawnDistance) return;
+
+  createTrailImage(x, y);
+
+  lastX = x;
+  lastY = y;
+});
+
+function createTrailImage(x, y) {
+
+  const img = document.createElement("img");
+
+  img.src = images[imageIndex];
+  img.className = "trail-image";
+
+  const rotation =
+    (Math.random() * rotationRange * 2 - rotationRange);
+
+  img.style.width = imageSize + "px";
+  img.style.height = imageSize + "px";
+  img.style.left = x + "px";
+  img.style.top = y + "px";
+  img.style.setProperty("--rotation", rotation + "deg");
+
+  container.appendChild(img);
+
+  activeImages.push(img);
+
+  imageIndex = (imageIndex + 1) % images.length;
+
+  // Limit simultaneously visible images
+  while (activeImages.length > trailLength) {
+    const oldImage = activeImages.shift();
+    oldImage.remove();
+  }
+
+  // Remove image after animation
+  setTimeout(() => {
+    img.remove();
+    activeImages = activeImages.filter(item => item !== img);
+  }, 900);
+}
+</script>
+
+</body>
+</html>
